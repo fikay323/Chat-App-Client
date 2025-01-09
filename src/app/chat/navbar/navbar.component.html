@@ -1,0 +1,18 @@
+<div class="w-full bg-gray-500 h-full flex flex-col items-center">
+    <h2 class="bg-white w-[90%] text-lg font-semibold py-1 px-2 rounded-md mt-2 mx-auto text-center">{{ username  | titlecase}}</h2>
+    <input class="block mx-auto p-2 mt-3 rounded-md min-w-0 w-[90%]" type="text" [(ngModel)]="searchString" (ngModelChange)="search($event)" placeholder="Search">
+    <section class="bg-white mt-3 p-1 w-[90%] mx-auto rounded-md">
+        @if (searchString.trim().length > 0 && isSearchFound && !isSearching) {
+            <app-searched-users class="border-b-2 border-black " *ngFor="let user of usersFound" [user]="user" (closeSearch)="clearSearch()"></app-searched-users>
+        } @else if (searchString.trim().length > 0 && !isSearchFound && !isSearching) {
+            <p>User not found</p>
+        } @else if (isSearching && searchString.trim().length > 0) {
+            <div class="text-center">
+                <span class="loader"></span>
+            </div>
+        } @else {
+            <app-searched-users class="border-b-2 border-black " *ngFor="let user of usersChatted" [user]="user" [isTyping]="displayTyping"></app-searched-users>
+        }
+    </section>
+    <button (click)="logOut()" class="bg-white p-1 rounded-md font-semibold mt-auto mb-3 hover:bg-slate-200 hover:scale-95" type="button">Log-out</button>
+</div>

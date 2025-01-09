@@ -1,0 +1,14 @@
+<section id="main" *ngIf="selectedUser">
+  <p class="bg-gray-300 p-1 pl-4 py-2 text-xl font-bold">{{ selectedUser.username | titlecase | truncate:12 }}</p>
+  <header class="bg-green-500 text-white font-semibold p-2" *ngIf="displayTyping.isTyping && selectedUser.userID === displayTyping.senderID">{{ typingMessage }} <div class="loader"></div></header>
+  <form id="form"  class="bg-white" #messageForm='ngForm' (ngSubmit)="submitForm(messageForm)">
+    <ul #scrollMe id="messages" class="w-full h-[90vh] overflow-y-auto">
+      <li [ngClass]="{'mine': currentUser.userID === message.sentBy}" *ngFor="let message of messages; let isLast = last" #li>{{ message.content }}</li>
+    </ul>
+    <section #bottom class="absolute bottom-0 right-0 bg-gray-300 w-3/4 p-2 flex">
+      <input class="border-black border-2 p-1" (blur)="onInputBlur()" (focus)="onInputFocus()" placeholder="Write your message" id="input" autocomplete="off" name="message" ngModel (ngModelChange)="checkTyping($event)" required/>
+      <button class="bg-gray-300 text-black font-semibold border-2 border-black rounded-md p-1" type="submit">Send</button>
+    </section>
+  </form>
+</section>
+<app-chat-start *ngIf="!selectedUser"></app-chat-start>

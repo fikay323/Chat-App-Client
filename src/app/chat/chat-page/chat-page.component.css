@@ -1,0 +1,68 @@
+#main {
+  background-color: red !important;
+  height: calc(100vh - 100px) !important;
+}
+#input { 
+  border: none; 
+  padding: 0 1rem; 
+  flex-grow: 1; 
+  border-radius: 2rem; 
+  margin: 0.25rem; 
+  text-transform: capitalize;
+  min-width: 0px;
+}
+#input:focus { 
+  outline: none; 
+}
+#form > button { 
+  background: #333; 
+  border: none; 
+  padding: 0 1rem; 
+  margin: 0.25rem; 
+  border-radius: 3px; 
+  outline: none; 
+  color: #fff; 
+}
+
+#messages {
+  list-style-type: none; 
+  margin: 0; 
+  padding: 0 0 50px 0;
+  /* scroll-behavior: smooth; */
+}
+
+.loader {
+  display: inline-block;
+  width: 30px;
+  aspect-ratio: 4;
+  --_g: no-repeat radial-gradient(circle closest-side,#fff 90%,#0000);
+  background: 
+    var(--_g) 0%   50%,
+    var(--_g) 50%  50%,
+    var(--_g) 100% 50%;
+  background-size: calc(100%/3) 100%;
+  animation: l7 1s infinite linear;
+}
+@keyframes l7 {
+    33%{background-size:calc(100%/3) 0%  ,calc(100%/3) 100%,calc(100%/3) 100%}
+    50%{background-size:calc(100%/3) 100%,calc(100%/3) 0%  ,calc(100%/3) 100%}
+    66%{background-size:calc(100%/3) 100%,calc(100%/3) 100%,calc(100%/3) 0%  }
+}
+
+li {
+  color: white;
+  margin: 5px 10px;
+  width: -moz-fit-content;
+  width: fit-content;
+  max-width: 80%;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  padding: 10px 10px;
+  border-radius: 7px;
+  background-color: grey;
+}
+
+.mine {
+  margin-left: auto;
+  background-color: rgb(71, 71, 248);
+}

@@ -1,0 +1,18 @@
+<div *ngIf="!isFetching" class="login-container border shadow-2xl rounded-lg">
+    <form (ngSubmit)="login(loginForm)" #loginForm="ngForm">
+        <label for="username">Username</label>
+        <input type="text" class="rounded-md bg-blue-100 border border-blue-400 focus:border-blue-600 focus:border-2" id="username" name="username" ngModel required>
+        <small *ngIf="loginForm.controls['username']?.invalid && loginForm.controls['username'].touched">Input a valid email</small>
+        
+        <label for="password">Password</label>
+        <input type="password" class="rounded-md bg-blue-100 border border-blue-400 focus:border-blue-600 focus:border-2" id="password" name="password" ngModel required minlength="6">
+        <small *ngIf="loginForm.controls['password']?.invalid && loginForm.controls['password'].touched">Input a valid password</small>
+        
+        <button [disabled]="!loginForm.valid" class="bg-blue-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed" type="submit">Login</button>
+        <p class="text-zinc-600 text-sm font-medium mt-3 text-center">Don't have an account? <a routerLink="/auth/register" class="hover:underline hover:font-semibold cursor-pointer">Sign Up</a></p>
+    </form>
+</div>
+<div *ngIf="(isFetching)" class="text-center">
+    <app-loading-spinner></app-loading-spinner>
+</div>
+<app-alert *ngIf="errorMessage" [message]="errorMessage" (close)="closeAlertComponent()"></app-alert>
