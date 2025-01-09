@@ -26,7 +26,7 @@ export class SignalRService {
   private createConnection() {
     try {
       this.hubConnection = new HubConnectionBuilder()
-      .withUrl('https://localhost:7098/chatHub')
+      .withUrl('https://chat-app-server-o90s.onrender.com/chatHub')
       .build();
     } catch (err) {
       console.log(err)
@@ -62,15 +62,14 @@ export class SignalRService {
 
   startConnection = () => {
     if(this.hubConnection.state === HubConnectionState.Disconnected) {
-      this.hubConnection.start()
+      return this.hubConnection.start()
     }
-
+    return Promise.resolve()
   }
 
   private stopConnection() {
     if (this.hubConnection) {
       this.hubConnection.stop().then(() => {
-        console.log("Connection stopped");
         this.isConnected.next(false);
       }).catch(err => console.error("Error while stopping connection: " + err));
     }

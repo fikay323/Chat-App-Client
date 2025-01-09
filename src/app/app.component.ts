@@ -12,9 +12,12 @@ import { SignalRService } from './signal-r.service';
   standalone: true
 })
 export class AppComponent {
+  
   constructor(private router: Router, private authService: AuthService, private signalRService: SignalRService) {}
+
   ngOnInit() {
-    this.signalRService.startConnection()
-    this.authService.autoLogin()
+    this.signalRService.startConnection().then(e => {
+      this.authService.autoLogin()
+    })
   }
 }
