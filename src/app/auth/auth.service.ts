@@ -44,20 +44,13 @@ export class AuthService {
     if (this.hubConnection?.state === HubConnectionState.Connected) {
       this.handleLogin(user)
     } else {
-      let count = 0
-      interval = setInterval(() => {
-        count++
-        if (count <= 1) {
-          this.handleLogin(user)
-        } else {
-          clearInterval(interval)
-          if (autologin.autologin && this.hubConnection?.state !== HubConnectionState.Connected) {
-            console.warn("An error occurred, Pls login again");
-            throw new Error("Not connected to the server.");
-          } else if(!autologin.autologin ) {
-            console.warn("Not connected, login failed");
-            throw new Error("Not connected to the server.");
-          }
+      interval = setTimeout(() => {
+        this.handleLogin(user)
+        if (autologin.autologin && this.hubConnection?.state !== HubConnectionState.Connected) {
+          this.isFetching.next(false)
+          localStorage.removeItem(this.LOCALSTORAGE_KEY)
+          console.warn("An error occurred, Pls login again");
+          return
         }
       }, 2000);
     }
