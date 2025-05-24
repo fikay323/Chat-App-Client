@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { AuthService } from './auth/auth.service';
-import { ChatService } from './chat/chat.service';
-import { SignalRService } from './signal-r.service';
+import { AuthService } from './infrastructure/auth/auth.service';
+import { ChatService } from './infrastructure/chat/chat.service';
+import { SignalRService } from './infrastructure/signalr/signal-r.service';
 
 @Component({
   selector: 'app-root',

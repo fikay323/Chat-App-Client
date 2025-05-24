@@ -1,10 +1,9 @@
 import { Routes } from '@angular/router';
-import { ChatComponent } from './chat/chat.component';
-import { AuthComponent } from './auth/auth.component';
-import { LoginComponent } from './auth/login/login.component';
-import { RegisterComponent } from './auth/register/register.component';
-import { chatGuard } from './chat/chat.guard';
-import { ChatResolver } from './chat.resolver';
+import { ChatComponent } from './presentation/chat/chat.component';
+import { AuthComponent } from './presentation/auth/auth.component';
+import { LoginComponent } from './presentation/auth/login/login.component';
+import { RegisterComponent } from './presentation/auth/register/register.component';
+import { chatGuard } from './presentation/shared/guards/chat.guard';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'chat', pathMatch: 'full' },
@@ -13,6 +12,5 @@ export const routes: Routes = [
         { path: 'login', component: LoginComponent },
         { path: 'register', component: RegisterComponent }
     ]},
-    // { path: 'chat', component: ChatComponent, canActivate: [chatGuard], resolve: [ChatResolver] },
     { path: 'chat', component: ChatComponent, canActivate: [chatGuard] }
 ];
