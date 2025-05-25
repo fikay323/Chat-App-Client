@@ -16,10 +16,10 @@ export class SearchedUsersComponent {
   @Input('isTyping') isTyping: IsTyping
   @Output() closeSearch: EventEmitter<void> = new EventEmitter
 
-  constructor(private chatService: ChatService) {}
+  constructor(private readonly chatService: ChatService) {}
 
   selectUser(user) {
-    this.chatService.selectUser(user)
-    this.closeSearch.emit()
+    this.chatService.selectUser(user);
+    this.closeSearch.emit();
   }
 }

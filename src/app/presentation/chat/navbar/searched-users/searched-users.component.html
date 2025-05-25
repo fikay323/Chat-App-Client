@@ -1,4 +1,4 @@
 <p class="border-b-2 border-black overflow-hidden p-2 cursor-pointer rounded-md mt-1 relative" (click)="selectUser(user)">
     {{ user.username | truncate:8 }}
-    <span *ngIf="isTyping.isTyping && isTyping.senderID === user.userID" class="bg-green-500 text-white text-xs p-1 font-medium rounded-md absolute -top-0 right-0">Typing</span>
+    <span *ngIf="isTyping?.isTyping && isTyping?.senderID === user?.userID" class="bg-green-500 text-white text-xs p-1 font-medium rounded-md absolute -top-0 right-0">Typing</span>
 </p>
