@@ -22,7 +22,9 @@ export class NotificationFacade {
             await firstValueFrom(this.http.post(this.baseApiUrl + 'api/notifications/register-token', {
                 userId: this.authService.getUserId(),
                 token
-            }));
+            })).then(() => {
+                console.log('FCM token registered with backend');
+            });
         } catch (err) {
             console.error('Push Notification Error:', err);
         }
