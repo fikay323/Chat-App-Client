@@ -6,6 +6,8 @@ export interface IAuthService {
 
   login(user: User, options?: { autologin: boolean }): Promise<any>;
 
+  authSignalRHandlers(): void;
+
   logOut(): void;
 
   autoLogin(): void;

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
-import { HubConnection, HubConnectionState } from '@microsoft/signalr';
+import { BehaviorSubject, catchError, filter, firstValueFrom, from, Observable, switchMap, take, tap, throwError } from 'rxjs';
+import { HttpClient, HubConnection, HubConnectionState } from '@microsoft/signalr';
 
 import { User } from '../../core/models/user.model';
 import { SignalRService } from '../signalr/signal-r.service';
@@ -13,7 +13,8 @@ import { IAuthService } from '../../core/interfaces/auth.service.interface';
 
 export class AuthService implements IAuthService {
   private readonly LOCALSTORAGE_KEY = "user-details";
-  private readonly hubConnection: HubConnection;
+  private hubConnection: HubConnection = this.signalRService.getHubConnection();
+  private readonly hubConnectionStatus$: Observable<boolean> = this.signalRService.getConnectionStatus();;
   isFetching$ = new BehaviorSubject<boolean>(false);
   errorMessage$ = new BehaviorSubject<string | null>(null);
   userConnected$ = new BehaviorSubject<User | null>(null);
@@ -21,15 +22,12 @@ export class AuthService implements IAuthService {
 
 
   constructor(
-    private readonly router: Router, 
+    private readonly router: Router,
     private readonly signalRService: SignalRService
-  ) {
-    this.hubConnection = signalRService.getHubConnection();
-    this.authSignalRHandlers();
-  }
+  ) {}
 
   async signUp(user: User) {
-    this.isFetching$.next(true)
+    this.isFetching$.next(true);
     if (this.hubConnection?.state === HubConnectionState.Connected) {
       try {
         return await this.hubConnection.invoke('Register', user.username, user.password);
@@ -43,57 +41,58 @@ export class AuthService implements IAuthService {
     }
   }
   
-  async login(user: User, autologin?: { autologin: boolean }) {
-    this.isFetching$.next(true);  
-    if (this.hubConnection?.state === HubConnectionState.Connected) {
-      this.handleLogin(user);
-    } else {
-      setTimeout(() => {
-        this.handleLogin(user)
-        if (autologin.autologin && this.hubConnection?.state !== HubConnectionState.Connected) {
-          this.isFetching$.next(false)
-          localStorage.removeItem(this.LOCALSTORAGE_KEY)
-          console.warn("An error occurred, Pls login again");
-        }
-      }, 2000);
-    }
-  }
-
-  private async handleLogin(user: User) {
-    try {
-      return await this.hubConnection.invoke('Login', user.username, user.password);
-    } catch (error) {
-      console.error("Error during login:", error);
-      throw error;
-    }
+  async login(user: User) {
+    this.isFetching$.next(true);
+  
+    return firstValueFrom(
+      this.hubConnectionStatus$.pipe(
+        filter(status => status === true),
+        take(1),
+        switchMap(() => {
+          this.hubConnection = this.signalRService.getHubConnection();
+          return from(this.hubConnection.invoke('Login', user.username, user.password)
+        )}),
+        tap(() => this.isFetching$.next(false)),
+        catchError(err => {
+          this.isFetching$.next(false);
+          return throwError(() => err);
+        })
+      )
+    );
   }
   
-  private authSignalRHandlers() {
-    this.hubConnection.on('RegistrationSuccessful', (user: User) => {
-      this.handleAuth(user);
-    });
-    
-    this.hubConnection.on('RegistrationFailed', (error: string) => {
-      console.log(error);
-      this.errorMessage$.next(error);
-      this.isFetching$.next(false);
-    });
-    
-    this.hubConnection.on('LoginSuccessful', (user: User) => {
-      this.handleAuth(user);
-      this.getUnreadMessages();
-    });
-    
-    this.hubConnection.on('LoginFailed', (error: string) => {
-      console.log(error)
-      this.errorMessage$.next(error);
-      this.isFetching$.next(false);
-    });
+  authSignalRHandlers() {
+    return this.hubConnectionStatus$.pipe(
+      filter(status => status),
+      tap(() => {
+        this.hubConnection = this.signalRService.getHubConnection();
+        this.hubConnection.on('RegistrationSuccessful', (user: User) => {
+          this.handleAuth(user);
+        });
+        
+        this.hubConnection.on('RegistrationFailed', (error: string) => {
+          console.log(error);
+          this.errorMessage$.next(error);
+          this.isFetching$.next(false);
+        });
+        
+        this.hubConnection.on('LoginSuccessful', (user: User) => {
+          this.handleAuth(user);
+          this.getUnreadMessages();
+        });
+        
+        this.hubConnection.on('LoginFailed', (error: string) => {
+          console.log(error)
+          this.errorMessage$.next(error);
+          this.isFetching$.next(false);
+        });
+      })
+    )
   }
 
   getUnreadMessages = () => {
     let currentUser: User
-    this.userConnected$.subscribe(user => {
+    this.userConnected$.pipe(filter(user => !!user)).subscribe(user => {
       currentUser = user;
     })
     this.hubConnection.invoke('GetUnreadMessages', currentUser.userID);
@@ -104,13 +103,11 @@ export class AuthService implements IAuthService {
     this.currentUserId = user.userID;
     this.userConnected$.next(user);
     localStorage.setItem(this.LOCALSTORAGE_KEY, JSON.stringify(user));
-    this.signalRService.initialize(user.username);
     this.router.navigate(['chat']);
   }
 
   logOut() {
-    this.signalRService.destroy(); 
-    localStorage.removeItem('userID');
+    localStorage.removeItem(this.LOCALSTORAGE_KEY);
     this.currentUserId = null;
     this.userConnected$.next(null);
     this.router.navigate(['auth/login']);
@@ -120,7 +117,7 @@ export class AuthService implements IAuthService {
     const unparsedUser = localStorage.getItem(this.LOCALSTORAGE_KEY);
     if (unparsedUser) {
       const user: User = JSON.parse(unparsedUser);
-      this.login(user, { autologin: true });
+      this.login(user);
     };
   }
 

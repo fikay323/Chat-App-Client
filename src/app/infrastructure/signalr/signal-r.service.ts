@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { BehaviorSubject } from 'rxjs';
 import { ISignalRService } from '../../core/interfaces/signalr.service.interface';
 import { environment } from '../../../environments/environments';
@@ -10,23 +10,11 @@ import { environment } from '../../../environments/environments';
 export class SignalRService implements ISignalRService {
   private hubConnection: HubConnection;
   private readonly isConnected = new BehaviorSubject<boolean>(false);
-  username: string;
-  private readonly baseApiUrl = environment.baseApiUrl ;
+  private readonly baseApiUrl = environment.baseApiUrl;
 
-  constructor() { 
-    this.createConnection()
-  }
+  constructor() {}
 
-  initialize(username: string) {
-    this.username = username;
-    this.startConnection();
-  }
-  
-  destroy() {
-    this.stopConnection();
-  }
-
-  private createConnection() {
+  createConnection() {
     try {
       this.hubConnection = new HubConnectionBuilder()
       .withUrl(this.baseApiUrl + 'chatHub')
@@ -44,9 +32,6 @@ export class SignalRService implements ISignalRService {
     
     this.hubConnection.onclose(error => {
       this.isConnected.next(false);
-      if (this.username) {
-        setTimeout(() => this.startConnection(), 1000); 
-      }
     });
     
     this.hubConnection.onreconnecting(() => {
@@ -60,21 +45,10 @@ export class SignalRService implements ISignalRService {
   }
 
   getHubConnection = (): HubConnection => {
-    return this.hubConnection
+    return this.hubConnection;
   }
 
-  startConnection = () => {
-    if(this.hubConnection.state === HubConnectionState.Disconnected) {
-      return this.hubConnection.start()
-    }
-    return Promise.resolve()
-  }
-
-  private stopConnection() {
-    if (this.hubConnection) {
-      this.hubConnection.stop().then(() => {
-        this.isConnected.next(false);
-      }).catch(err => console.error("Error while stopping connection: " + err));
-    }
+  getConnectionStatus() {
+    return this.isConnected.asObservable();
   }
 }

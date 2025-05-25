@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+import { filter } from 'rxjs';
 
 import { Message } from '../../../core/models/message.model';
 import { ChatService, IsTyping } from '../../../infrastructure/chat/chat.service';
@@ -23,7 +24,6 @@ export class ChatPageComponent {
   typingMessage = 'User is typing';
   selectedUser: SelectedUser;
   currentUser: User;
-  username = this.chatService.username;
   displayTyping: IsTyping;
   changed = false;
   isInputFocused = false;
@@ -34,7 +34,7 @@ export class ChatPageComponent {
   ){}
 
   ngOnInit(){
-    this.authService.userConnected$.subscribe(user => {
+    this.authService.userConnected$.pipe(filter(user => !!user)).subscribe(user => {
       this.currentUser = user;
     })
     this.chatService.unRecievedMessages();

@@ -1,13 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { SearchedUsersComponent } from './searched-users/searched-users.component';
 import { ChatService, IsTyping } from '../../../infrastructure/chat/chat.service';
 import { SelectedUser } from '../../../core/models/selected-user.model';
 import { AuthService } from '../../../infrastructure/auth/auth.service';
-import { SignalRService } from '../../../infrastructure/signalr/signal-r.service';
-
+import { filter, Subject, takeUntil } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -16,39 +15,58 @@ import { SignalRService } from '../../../infrastructure/signalr/signal-r.service
   templateUrl: 'navbar.component.html',
   imports: [CommonModule, FormsModule, SearchedUsersComponent],
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit, OnDestroy {
   searchString: string = '';
   isSearching: boolean = false;
   isSearchFound: boolean = false;
   timer: any;
   displayTyping: IsTyping;
-  username: string = this.signalRService.username;
+  username: string = "";
   usersFound: SelectedUser[] = [];
   usersChatted: SelectedUser[] = this.chatService.allUsers;
+
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly chatService: ChatService,
     private readonly authService: AuthService,
-    private readonly signalRService: SignalRService
   ) { }
 
   ngOnInit() {
-    this.chatService.searchProduced().subscribe(users => {
-      this.usersFound = users
-      if (this.usersFound.length > 0) {
-        this.isSearchFound = true;
-      } else {
-        this.isSearchFound = false;
-      }
-      this.isSearching = false;
-    })
-    this.chatService.getNewMessage().subscribe();
-    this.chatService.getAllUsersChattedWith().subscribe(users => {
-      this.usersChatted = users;
-    });
-    this.chatService.getStatus().subscribe(istyping => {
-      this.displayTyping = istyping;
-    });
+    this.chatService.searchProduced()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(users => {
+        this.usersFound = users
+        if (this.usersFound.length > 0) {
+          this.isSearchFound = true;
+        } else {
+          this.isSearchFound = false;
+        }
+        this.isSearching = false;
+      })
+    this.chatService.getNewMessage()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+    this.chatService.getAllUsersChattedWith()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(users => {
+        this.usersChatted = users;
+      });
+    this.chatService.getStatus()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(istyping => {
+        this.displayTyping = istyping;
+      });
+    this.authService.userConnected$
+      .pipe(takeUntil(this.destroy$), filter(user => !!user))
+      .subscribe({
+        next: user => this.username = user.username
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   clearSearch() {

@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs';
 import { Message } from '../../core/models/message.model';
 import { SelectedUser } from '../../core/models/selected-user.model';
 
@@ -18,7 +18,7 @@ export interface IsTyping {
   providedIn: 'root',
 })
 
-export class ChatService implements IChatService {
+export class ChatService implements IChatService, OnDestroy {
   message: Subject<Message> = new Subject<Message>();
   usersFound: Subject<any[]> = new Subject<any[]>(); 
   isTyping: BehaviorSubject<IsTyping> = new BehaviorSubject<IsTyping>({isTyping: false});
@@ -28,19 +28,30 @@ export class ChatService implements IChatService {
   private readonly allUsersSubject: BehaviorSubject<SelectedUser[]> = new BehaviorSubject([]);
   allUsers: SelectedUser[] = []
   private readonly hubConnection: HubConnection;
-  readonly username = this.signalRService.username;
+  readonly username = "";
+
+  private readonly destroy$ = new Subject<void>();
   
   constructor(
     private readonly signalRService: SignalRService, 
     private readonly authservice: AuthService
   ) {
     this.hubConnection = signalRService.getHubConnection()
-    authservice.userConnected$.subscribe(user => {
-      this.currentUser = user
-    })
-    this.allUsersSubject.subscribe(users => {
-      this.allUsers = users
-    })
+    authservice.userConnected$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser = user;
+      })
+    this.allUsersSubject
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(users => {
+        this.allUsers = users;
+      })
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   sendMessage(message: Message) {
@@ -49,7 +60,6 @@ export class ChatService implements IChatService {
         .catch(error => console.warn('Error sending message:', error));
     } else {
       console.warn('Not connected, message not sent:', message);
-      this.signalRService.startConnection(); 
     }
   }
   
@@ -136,7 +146,6 @@ export class ChatService implements IChatService {
         .catch(error => console.log('Error sending typing notification:', error));
     } else {
       console.warn('Not connected, typing status not sent');
-      this.signalRService.startConnection();
     }
   }
 
@@ -153,7 +162,6 @@ export class ChatService implements IChatService {
         .catch(error => console.error('Error searching users:', error));
     } else {
       console.warn('Not connected, search not performed');
-      this.signalRService.startConnection();
     }
   }
 
